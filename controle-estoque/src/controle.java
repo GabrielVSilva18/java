@@ -1,8 +1,11 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.Scanner;
-
 import javax.swing.JOptionPane;
 
-public class App2 {
+public class controle {
 
     public static void main(String[] args) throws Exception {
         Scanner teclado = new Scanner(System.in);
@@ -37,8 +40,24 @@ public class App2 {
                     registrarVenda(produtos, precos, estoque);
                     break;
 
+                case 3:
+                    reporEstoque(produtos, precos, estoque);
+                    break;
+
                 case 4:
                     exibirRelatorio(produtos, precos, estoque);
+                    break;
+
+                case 5:
+                    consultarProduto(produtos, precos, estoque);
+                    break;
+
+                case 6:
+                    salvarDados(produtos, precos, estoque);
+                    break;
+
+                case 7:
+                    carregarDados(produtos, precos, estoque);
                     break;
 
                 case 8:
@@ -60,21 +79,147 @@ public class App2 {
 
     // MÉTODOS ---------------------------------------------------------------------------------------------------
 
+    // Carrega os dados salvos no arquivo e armazena as informações na matriz e vetores
+    private static void carregarDados(String[][] produtos, double[] precos, int[] estoque) {
+        try {
+            FileReader arquivo = new FileReader("estoque.txt");
+            BufferedReader carregar = new BufferedReader(arquivo);
+            String linhaArquivo;
+            int posicao = 0;
+
+            // Limpa todos os registros
+            for (int l = 0; l < produtos.length; l++) {
+                produtos[l][0] = null;
+                produtos[l][1] = null;
+                produtos[l][2] = null;
+
+                precos[l] = 0;
+                estoque[l] = 0;
+            }
+
+            // Lê cada registro e guarda na matriz e vetores
+            while ((linhaArquivo = carregar.readLine()) != null) {
+                if (posicao > 50) {
+                    break;
+                }
+                String[] linha = linhaArquivo.split(";");
+                produtos[posicao][0] = linha[0];
+                produtos[posicao][1] = linha[1];
+                produtos[posicao][2] = linha[2];
+                precos[posicao] = Double.parseDouble(linha[3]);
+                estoque[posicao] = Integer.parseInt(linha[4]);
+                posicao += 1;
+            }
+
+            carregar.close();
+            JOptionPane.showMessageDialog(null, "Os dados foram carregados!");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro ao carregar dados!");
+        }
+    }
+
+    // Salva os dados de estoque em um arquivo de texto
+    private static void salvarDados(String[][] produtos, double[] precos, int[] estoque) {
+        try {
+            FileWriter arquivo = new FileWriter("estoque.txt");
+            BufferedWriter salvar = new BufferedWriter(arquivo);
+
+            // Salva cada dado guardado na matriz e vetores
+            for (int l = 0; l < produtos.length; l++) {
+                if (produtos[l][0] != null && estoque[l] != 0) {
+                    for (int c = 0; c < produtos[l].length; c++) {
+                        salvar.write(produtos[l][c] + ";");
+                    }
+                    salvar.write(precos[l] + ";" + estoque[l] + "\n");
+                }
+            }
+
+            salvar.close();
+            JOptionPane.showMessageDialog(null, "Dados salvos com sucesso!");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro ao salvar dados!");
+        }
+
+    }
+
+    // Realiza consulta de produto, localizando pelo código inserido pelo usuário
+    private static void consultarProduto(String[][] produtos, double[] precos, int[] estoque) {
+        boolean invalido = true;
+        
+        String codigo = (JOptionPane.showInputDialog("Informe o código do produto:")).trim();
+        for (int l = 0; l < produtos.length; l++) {
+            if (produtos[l][0] != null && produtos[l][0].equals(codigo)) {
+                System.out.println("Produto identificado!");
+                System.out.println("Código / Nome / Categoria / Preço / Estoque");
+                for (int c = 0; c < produtos[l].length; c++) {
+                    System.out.print(produtos[l][c]  + " ");
+                }
+                System.out.print("R$" + precos[l] + " ");
+                System.out.println(estoque[l]);
+                invalido = false;
+                break;
+            }
+        }
+        if (invalido) {
+            JOptionPane.showMessageDialog(null, "Produto não identificado!");
+        }
+    }
+
+    // Localiza produto por código, solicita quantidade a adicionar e atualiza estoque
+    private static void reporEstoque(String[][] produtos, double[] precos, int[] estoque) {
+        int posicao = 0;
+        int qtd = 0;
+        boolean invalido = true;
+
+        // Recebe codigo inserido e localiza produto
+        String codigo = (JOptionPane.showInputDialog("Informe o código do produto:")).trim();
+        for (int l = 0; l < produtos.length; l++) {
+            if (produtos[l][0] != null && produtos[l][0].equals(codigo)) {
+                System.out.println("Produto identificado!");
+                System.out.println("Código / Nome / Categoria / Preço / Estoque");
+                for (int c = 0; c < produtos[l].length; c++) {
+                    System.out.print(produtos[l][c]  + " ");
+                }
+                System.out.print("R$" + precos[l] + " ");
+                System.out.println(estoque[l]);
+                posicao = l;
+                invalido = false;
+                break;
+            }
+        }
+        if (invalido) {
+            JOptionPane.showMessageDialog(null, "Produto não identificado!");
+        } else {
+            // Solicita quantidade que será adicionada
+            do {
+                qtd = Integer.parseInt(JOptionPane.showInputDialog("Insira quantidade:"));
+            } while (qtd <= 0);
+
+            estoque[posicao] += qtd;
+        }
+
+        JOptionPane.showMessageDialog(null, "Quantidade adicionada com sucesso!");
+        System.out.println("===============================");
+        System.out.println(qtd + " unidades de " + produtos[posicao][1] + " foram adicionados no estoque!");
+        System.out.println("Estoque atual: " + estoque[posicao]);
+    }
+
     // Registra venda, recebe código do produto informado pelo usuario, solicita quantidade no estoque, atualiza o estoque e calcula valor total da venda
     private static void registrarVenda(String[][] produtos, double[] precos, int[] estoque) {
         boolean invalido = true;
         int posicao = 0;
         int qtd = 0;
 
-        // Recebe código inserido e identifica produto
+        // Recebe código inserido e localiza produto
         String codigo = (JOptionPane.showInputDialog("Informe o código do produto:")).trim();
         for (int l = 0; l < produtos.length; l++) {
             if (produtos[l][0] != null && produtos[l][0].equals(codigo)) {
                 System.out.println("Produto identificado!");
+                System.out.println("Código / Nome / Categoria / Preço / Estoque");
                 for (int c = 0; c < produtos[l].length; c++) {
                     System.out.print(produtos[l][c]  + " ");
                 }
-                System.out.print(precos[l] + " ");
+                System.out.print("R$" + precos[l] + " ");
                 System.out.println(estoque[l]);
                 posicao = l;
                 invalido = false;
@@ -93,8 +238,8 @@ public class App2 {
 
             JOptionPane.showMessageDialog(null, "Sua venda foi registrada!");
             System.out.println("===============================");
-            System.out.println(qtd + "unidades de " +  produtos[posicao][1] + " foram vendidos!");
-            System.out.println("Valor total: " + (precos[posicao] * qtd));
+            System.out.println(qtd + " unidades de " +  produtos[posicao][1] + " foram vendidos!");
+            System.out.println("Valor total: R$" + (precos[posicao] * qtd));
             System.out.println("Estoque atual: " + estoque[posicao]);
         }
     }
@@ -115,6 +260,7 @@ public class App2 {
 
         }
 
+        System.out.println("Código / Nome / Categoria / Preço / Estoque");
         // Verifica se há produto cadastrado e realiza contagem de produtos, soma da quantidade e valor total do estoque e identifica produto com maior e menor estoque
         for (int l = 0; l < produtos.length; l++) {
             if (produtos[l][0] != null && estoque[l] != 0) {
@@ -138,7 +284,7 @@ public class App2 {
                 }
             }
             if (produtos[l][0] != null && estoque[l] != 0) {
-                System.out.print(precos[l] + " ");
+                System.out.print("R$" + precos[l] + " ");
                 System.out.print(estoque[l] + " \n");
             }
         }
