@@ -1,2 +1,2 @@
 # java
-Projetos que fiz durante a faculdade
+Projetos que fiz para a faculdade
